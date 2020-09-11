@@ -14,7 +14,7 @@ spec:
         app: test-api
     spec:
       containers:
-        - image: nginx
+        - image: alpine
           name: test-api2
           ports:
             - containerPort: 1701
