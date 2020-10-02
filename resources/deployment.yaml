@@ -14,11 +14,11 @@ spec:
         app: test-api
     spec:
       containers:
-        - image: andriicodefresh/test:v3
+        - image: andriicodefresh/test:v2
           name: test-api
           ports:
             - containerPort: 1700
-        - image: nginx
+        - image: nginx:stable
           name: test-nginx
           ports:
             - containerPort: 1701
