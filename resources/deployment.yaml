@@ -14,7 +14,7 @@ spec:
         app: test-api
     spec:
       containers:
-        - image: nginx
+        - image: andriicodefresh/test
           name: test-api
           ports:
             - containerPort: 1700
