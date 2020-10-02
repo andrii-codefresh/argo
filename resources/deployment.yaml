@@ -18,3 +18,7 @@ spec:
           name: test-api
           ports:
             - containerPort: 1700
+        - image: nginx
+          name: test-nginx
+          ports:
+            - containerPort: 1701
