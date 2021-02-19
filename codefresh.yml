@@ -5,12 +5,12 @@ steps:
     type: git-clone
     repo: https://github.com/andrii-codefresh/${{CF_REPO_NAME}}
     git: github
-    maskoutput: true
     revision: ${{CF_BRANCH}}
     
   version:
     image: alpine
     working_directory: ${{clone}}
+    maskoutput: true
     commands:
       - cf_export IMAGE_TAG=$(cat tag.txt)
 
