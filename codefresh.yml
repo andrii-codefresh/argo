@@ -1,0 +1,94 @@
+version: "1.0"
+steps:
+  clone:
+    title: Cloning repository
+    type: git-clone
+    repo: https://github.com/andrii-codefresh/${{CF_REPO_NAME}}
+    git: github
+    revision: ${{CF_BRANCH}}
+    
+  version:
+    image: alpine
+    working_directory: ${{clone}}
+    commands:
+      - cf_export IMAGE_TAG=$(cat tag.txt)
+
+  build:
+    title: Building Docker image
+    type: build
+    image_name: andriicodefresh/${{CF_REPO_NAME}}
+    working_directory: ${{clone}}
+    tag: ${{IMAGE_TAG}}
+    dockerfile: "Dockerfile"
+    
+  push:
+    type: push
+    arguments:
+      candidate: ${{build}}
+      tag: ${{IMAGE_TAG}}
+      image_name: andriicodefresh/${{CF_REPO_NAME}}
+      registry: dockerhub
+        
+#   enrich-image:
+#     title: Add pull requests to image
+#     type: image-enricher
+#     fail_fast: false
+#     arguments:
+#       IMAGE: docker.io/andriicodefresh/${{CF_REPO_NAME}}:${{IMAGE_TAG}}
+#       BRANCH: ${{CF_BRANCH}}
+#       REPO: andrii-codefresh/${{CF_REPO_NAME}}
+#       GIT_PROVIDER_NAME: github
+#     when:
+#       steps:
+#         - name: build
+#           on:
+#             - success
+
+  extract_issue:
+    title: Extract issue and add to image
+    type: jira-issue-extractor
+    arguments:
+      IMAGE: docker.io/andriicodefresh/${{CF_REPO_NAME}}:${{IMAGE_TAG}}
+      JIRA_PROJECT_PREFIX: DEV
+      MESSAGE: DEV-1-tests-for-search
+      JIRA_HOST: codefresh.atlassian.net
+      JIRA_EMAIL: andrii@codefresh.io
+      JIRA_API_TOKEN: ${{JIRA_API_TOKEN}}
+    when:
+      steps:
+        - name: build
+          on:
+            - success
+  
+  Bump:
+    title: "Update version of image"
+    image: "mikefarah/yq:3"
+    working_directory: "${{clone}}"
+    commands: 
+      - cd /codefresh/volume/${{CF_REPO_NAME}}
+      - ls
+      - yq w -i /codefresh/volume/${{CF_REPO_NAME}}/resources/deployment.yaml "spec.template.spec.containers[0].image" "docker.io/andriicodefresh/${{CF_REPO_NAME}}:${{IMAGE_TAG}}"
+      - cat /codefresh/volume/${{CF_REPO_NAME}}/resources/deployment.yaml
+      
+  commit_and_push:
+    title: Commit changes and push
+    type: git-commit
+    arguments:
+      working_directory: "/codefresh/volume/${{CF_REPO_NAME}}"
+      repo: andrii-codefresh/${{CF_REPO_NAME}}
+      git: github
+      commit_message: Some commit message
+      git_user_name: andrii-codefresh
+      git_user_email: andrii@codefresh.io
+      
+  sync_and_wait_olegz:
+    title: Sync ArgoCD app and wait
+    type: argocd-sync
+    fail_false: false
+    arguments:
+      context: argocd-a
+      app_name: andrii-app
+      debug: true
+      wait_healthy: true
+      additional_flags: '--loglevel debug --timeout 50 --insecure'
+      additional_flags_for_wait_cmd: '--timeout 90'      
