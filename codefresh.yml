@@ -10,7 +10,8 @@ steps:
   version:
     image: alpine
     working_directory: ${{clone}}
-    maskoutput: true
+    maskoutput:
+      - IMAGE_TAG
     commands:
       - cf_export IMAGE_TAG=$(cat tag.txt)
 
