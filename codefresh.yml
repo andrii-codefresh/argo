@@ -6,13 +6,19 @@ steps:
     repo: https://github.com/andrii-codefresh/${{CF_REPO_NAME}}
     git: github
     revision: ${{CF_BRANCH}}
-    
+
   version:
     image: alpine
     working_directory: ${{clone}}
     maskoutput: true
     commands:
       - cf_export IMAGE_TAG=$(cat tag.txt)
+
+  print:
+    image: alpine
+    working_directory: ${{clone}}
+    commands:
+      - echo $IMAGE_TAG
 
   build:
     title: Building Docker image
@@ -21,7 +27,7 @@ steps:
     working_directory: ${{clone}}
     tag: ${{IMAGE_TAG}}
     dockerfile: "Dockerfile"
-    
+
   push:
     type: push
     arguments:
@@ -29,7 +35,7 @@ steps:
       tag: ${{IMAGE_TAG}}
       image_name: andriicodefresh/${{CF_REPO_NAME}}
       registry: dockerhub
-        
+
 #   enrich-image:
 #     title: Add pull requests to image
 #     type: image-enricher
@@ -60,17 +66,17 @@ steps:
         - name: build
           on:
             - success
-  
+
   Bump:
     title: "Update version of image"
     image: "mikefarah/yq:3"
     working_directory: "${{clone}}"
-    commands: 
+    commands:
       - cd /codefresh/volume/${{CF_REPO_NAME}}
       - ls
       - yq w -i /codefresh/volume/${{CF_REPO_NAME}}/resources/deployment.yaml "spec.template.spec.containers[0].image" "docker.io/andriicodefresh/${{CF_REPO_NAME}}:${{IMAGE_TAG}}"
       - cat /codefresh/volume/${{CF_REPO_NAME}}/resources/deployment.yaml
-      
+
   commit_and_push:
     title: Commit changes and push
     type: git-commit
@@ -81,7 +87,7 @@ steps:
       commit_message: Some commit message
       git_user_name: andrii-codefresh
       git_user_email: andrii@codefresh.io
-      
+
   sync_and_wait_olegz:
     title: Sync ArgoCD app and wait
     type: argocd-sync
@@ -92,4 +98,4 @@ steps:
       debug: true
       wait_healthy: true
       additional_flags: '--loglevel debug --timeout 50 --insecure'
-      additional_flags_for_wait_cmd: '--timeout 90'      
+      additional_flags_for_wait_cmd: '--timeout 90'
