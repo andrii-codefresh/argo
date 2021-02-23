@@ -1,0 +1,14 @@
+version: "1.0"
+
+steps:
+  step1:
+    image: alpine
+    maskoutput:
+      - var
+    commands:
+      - cf_export var=555
+
+  step2:
+    image: alpine
+    commands:
+      - echo $var
