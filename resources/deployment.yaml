@@ -14,7 +14,7 @@ spec:
         app: test-api
     spec:
       containers:
-        - image: docker.io/andriicodefresh/argo:v76
+        - image: docker.io/andriicodefresh/argo:v78
           name: test-api
           ports:
             - containerPort: 1700
